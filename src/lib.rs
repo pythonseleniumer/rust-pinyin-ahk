@@ -2,18 +2,18 @@ use pinyin::{ToPinyin, ToPinyinMulti};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
-/// 将汉字转换为无声调拼音，结果写入缓冲区
-/// 例如: "中国人" -> "zhong guo ren"
+/// 将汉字转换为无声调拼音
+/// 返回指针，调用者需要手动释放
 #[no_mangle]
-pub extern "C" fn pinyin_plain(text: *const c_char, output: *mut u8, output_len: usize) -> usize {
-    if text.is_null() || output.is_null() {
-        return 0;
+pub extern "C" fn pinyin_plain(text: *const c_char) -> *const c_char {
+    if text.is_null() {
+        return std::ptr::null();
     }
 
     let c_str = unsafe { CStr::from_ptr(text) };
     let input = match c_str.to_str() {
         Ok(s) => s,
-        Err(_) => return 0,
+        Err(_) => return std::ptr::null(),
     };
 
     let result: Vec<String> = input
@@ -23,32 +23,21 @@ pub extern "C" fn pinyin_plain(text: *const c_char, output: *mut u8, output_len:
         .collect();
 
     let output_str = result.join(" ");
-    let bytes = output_str.as_bytes();
-
-    if bytes.len() >= output_len {
-        return 0;
-    }
-
-    unsafe {
-        std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len());
-        *output.add(bytes.len()) = 0;
-    }
-
-    bytes.len()
+    let c_string = CString::new(output_str).unwrap();
+    c_string.into_raw() as *const c_char
 }
 
-/// 将汉字转换为带声调的拼音，结果写入缓冲区
-/// 例如: "中国人" -> "zhōng guó rén"
+/// 将汉字转换为带声调的拼音
 #[no_mangle]
-pub extern "C" fn pinyin_with_tone(text: *const c_char, output: *mut u8, output_len: usize) -> usize {
-    if text.is_null() || output.is_null() {
-        return 0;
+pub extern "C" fn pinyin_with_tone(text: *const c_char) -> *const c_char {
+    if text.is_null() {
+        return std::ptr::null();
     }
 
     let c_str = unsafe { CStr::from_ptr(text) };
     let input = match c_str.to_str() {
         Ok(s) => s,
-        Err(_) => return 0,
+        Err(_) => return std::ptr::null(),
     };
 
     let result: Vec<String> = input
@@ -58,32 +47,21 @@ pub extern "C" fn pinyin_with_tone(text: *const c_char, output: *mut u8, output_
         .collect();
 
     let output_str = result.join(" ");
-    let bytes = output_str.as_bytes();
-
-    if bytes.len() >= output_len {
-        return 0;
-    }
-
-    unsafe {
-        std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len());
-        *output.add(bytes.len()) = 0;
-    }
-
-    bytes.len()
+    let c_string = CString::new(output_str).unwrap();
+    c_string.into_raw() as *const c_char
 }
 
-/// 将汉字转换为数字标注声调的拼音，结果写入缓冲区
-/// 例如: "中国人" -> "zho1ng guo2 re2n"
+/// 将汉字转换为数字标注声调的拼音
 #[no_mangle]
-pub extern "C" fn pinyin_with_tone_num(text: *const c_char, output: *mut u8, output_len: usize) -> usize {
-    if text.is_null() || output.is_null() {
-        return 0;
+pub extern "C" fn pinyin_with_tone_num(text: *const c_char) -> *const c_char {
+    if text.is_null() {
+        return std::ptr::null();
     }
 
     let c_str = unsafe { CStr::from_ptr(text) };
     let input = match c_str.to_str() {
         Ok(s) => s,
-        Err(_) => return 0,
+        Err(_) => return std::ptr::null(),
     };
 
     let result: Vec<String> = input
@@ -93,32 +71,21 @@ pub extern "C" fn pinyin_with_tone_num(text: *const c_char, output: *mut u8, out
         .collect();
 
     let output_str = result.join(" ");
-    let bytes = output_str.as_bytes();
-
-    if bytes.len() >= output_len {
-        return 0;
-    }
-
-    unsafe {
-        std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len());
-        *output.add(bytes.len()) = 0;
-    }
-
-    bytes.len()
+    let c_string = CString::new(output_str).unwrap();
+    c_string.into_raw() as *const c_char
 }
 
-/// 将汉字转换为数字在末尾的拼音，结果写入缓冲区
-/// 例如: "中国人" -> "zhong1 guo2 ren2"
+/// 将汉字转换为数字在末尾的拼音
 #[no_mangle]
-pub extern "C" fn pinyin_with_tone_num_end(text: *const c_char, output: *mut u8, output_len: usize) -> usize {
-    if text.is_null() || output.is_null() {
-        return 0;
+pub extern "C" fn pinyin_with_tone_num_end(text: *const c_char) -> *const c_char {
+    if text.is_null() {
+        return std::ptr::null();
     }
 
     let c_str = unsafe { CStr::from_ptr(text) };
     let input = match c_str.to_str() {
         Ok(s) => s,
-        Err(_) => return 0,
+        Err(_) => return std::ptr::null(),
     };
 
     let result: Vec<String> = input
@@ -128,16 +95,16 @@ pub extern "C" fn pinyin_with_tone_num_end(text: *const c_char, output: *mut u8,
         .collect();
 
     let output_str = result.join(" ");
-    let bytes = output_str.as_bytes();
+    let c_string = CString::new(output_str).unwrap();
+    c_string.into_raw() as *const c_char
+}
 
-    if bytes.len() >= output_len {
-        return 0;
+/// 释放字符串内存
+#[no_mangle]
+pub extern "C" fn free_string(ptr: *mut c_char) {
+    if !ptr.is_null() {
+        unsafe {
+            let _ = CString::from_raw(ptr);
+        }
     }
-
-    unsafe {
-        std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len());
-        *output.add(bytes.len()) = 0;
-    }
-
-    bytes.len()
 }
