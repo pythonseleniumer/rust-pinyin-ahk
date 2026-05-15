@@ -3,7 +3,6 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
 /// 将汉字转换为无声调拼音
-/// 返回字符串指针
 #[no_mangle]
 pub extern "C" fn pinyin_plain(text: *const c_char) -> *mut c_char {
     if text.is_null() {
@@ -17,12 +16,12 @@ pub extern "C" fn pinyin_plain(text: *const c_char) -> *mut c_char {
     };
 
     let result: Vec<String> = input
-        .chars()
-        .filter_map(|ch| ch.to_pinyin().map(|p| p.plain().to_string()))
+        .to_pinyin()
+        .flatten()
+        .map(|p| p.plain().to_string())
         .collect();
 
     if result.is_empty() {
-        // 返回空字符串而不是 null
         return CString::new("").unwrap().into_raw();
     }
 
@@ -47,8 +46,9 @@ pub extern "C" fn pinyin_with_tone(text: *const c_char) -> *mut c_char {
     };
 
     let result: Vec<String> = input
-        .chars()
-        .filter_map(|ch| ch.to_pinyin().map(|p| p.with_tone().to_string()))
+        .to_pinyin()
+        .flatten()
+        .map(|p| p.with_tone().to_string())
         .collect();
 
     if result.is_empty() {
@@ -76,8 +76,9 @@ pub extern "C" fn pinyin_with_tone_num(text: *const c_char) -> *mut c_char {
     };
 
     let result: Vec<String> = input
-        .chars()
-        .filter_map(|ch| ch.to_pinyin().map(|p| p.with_tone_num().to_string()))
+        .to_pinyin()
+        .flatten()
+        .map(|p| p.with_tone_num().to_string())
         .collect();
 
     if result.is_empty() {
@@ -105,8 +106,9 @@ pub extern "C" fn pinyin_with_tone_num_end(text: *const c_char) -> *mut c_char {
     };
 
     let result: Vec<String> = input
-        .chars()
-        .filter_map(|ch| ch.to_pinyin().map(|p| p.with_tone_num_end().to_string()))
+        .to_pinyin()
+        .flatten()
+        .map(|p| p.with_tone_num_end().to_string())
         .collect();
 
     if result.is_empty() {
